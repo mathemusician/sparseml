@@ -49,15 +49,16 @@ from sparseml.pytorch.utils.quantization import (
 from sparseml.utils import clean_path, create_parent_dirs
 
 
-__all__ = [
-    "ModuleExporter",
-    "export_onnx",
-]
+__all__ = ["ModuleExporter"]
 
 
 DEFAULT_ONNX_OPSET = 9 if torch.__version__ < "1.3" else 11
 _LOGGER = logging.getLogger(__name__)
 
+def get_weights_copy(model):
+    weights_path = 'weights_temp.pt'
+    torch.save(model.state_dict(), weights_path)
+    return torch.load(weights_path)
 
 class ModuleExporter(object):
     """
@@ -76,7 +77,7 @@ class ModuleExporter(object):
         if is_parallel_model(module):
             module = module.module
 
-        self._module = deepcopy(module).to("cpu").eval()
+        self._module = module.to("cpu").eval()
         self._output_dir = clean_path(output_dir)
 
     def export_to_zoo(
@@ -394,8 +395,7 @@ def export_onnx(
     sample_batch = tensors_to_device(sample_batch, "cpu")
     create_parent_dirs(file_path)
 
-    module = deepcopy(module).cpu()
-    module.eval()
+    module = module.cpu().eval()
 
     with torch.no_grad():
         out = tensors_module_forward(sample_batch, module, check_feat_lab_inp=False)
