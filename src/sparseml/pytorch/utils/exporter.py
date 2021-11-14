@@ -77,7 +77,7 @@ class ModuleExporter(object):
         if is_parallel_model(module):
             module = module.module
 
-        self._module = module.clone().to("cpu").eval()
+        self._module = module.to("cpu").eval() #clone
         self._output_dir = clean_path(output_dir)
 
     def export_to_zoo(
@@ -395,7 +395,7 @@ def export_onnx(
     sample_batch = tensors_to_device(sample_batch, "cpu")
     create_parent_dirs(file_path)
 
-    module = module.clone().cpu().eval()
+    module = module.cpu().eval() # clone
 
     with torch.no_grad():
         out = tensors_module_forward(sample_batch, module, check_feat_lab_inp=False)
